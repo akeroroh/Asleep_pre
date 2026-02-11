@@ -13,68 +13,77 @@ import Combine
 /// - Timer 기반 재생 진행률 업데이트
 final class AudioPlayerService: NSObject, AudioPlayerProtocol {
 
-    // TODO: 프로퍼티 선언
-    // - private var audioPlayer: AVAudioPlayer?
-    // - private var progressTimer: Timer?
-    // - private let stateSubject = CurrentValueSubject<PlaybackState, Never>(.idle)
+    private var audioPlayer: AVAudioPlayer?
+    private var progressTimer: Timer?
+    private let stateSubject = CurrentValueSubject<PlaybackState, Never>(.idle)
 
     var statePublisher: AnyPublisher<PlaybackState, Never> {
-        // TODO: stateSubject.eraseToAnyPublisher()
-        Just(.idle).eraseToAnyPublisher()
+        stateSubject.eraseToAnyPublisher()
     }
 
     var currentTime: TimeInterval {
-        // TODO: audioPlayer?.currentTime ?? 0
-        return 0
+        audioPlayer?.currentTime ?? 0
     }
 
     var duration: TimeInterval {
-        // TODO: audioPlayer?.duration ?? 0
-        return 0
+        audioPlayer?.duration ?? 0
     }
 
     var isPlaying: Bool {
-        // TODO: audioPlayer?.isPlaying ?? false
-        return false
+        audioPlayer?.isPlaying ?? false
     }
 
     func play(url: URL) throws {
-        // TODO: 구현 순서
-        // 1. AVAudioPlayer(contentsOf: url) 초기화
-        // 2. player.delegate = self
-        // 3. player.prepareToPlay()
-        // 4. player.play()
-        //
-        // 5. 프로그레스 타이머 시작 (0.1초 간격)
-        //    - stateSubject.send(.playing(currentTime:, duration:))
-        //
-        // ⚠️ 이미 재생 중이면 stop() 후 새로 play
+        stop()
+        
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.delegate = self
+            audioPlayer?.prepareToPlay()
+            audioPlayer?.play()
+            
+            stateSubject.send(.playing(currentTime: currentTime, duration: duration))
+        } catch {
+            stateSubject.send(.error(.unknown(<#String#>)))
+            throw error
+        }
     }
+    
 
     func pause() {
-        // TODO: audioPlayer?.pause()
-        // progressTimer?.invalidate()
-        // stateSubject.send(.paused(currentTime:, duration:))
+        audioPlayer?.pause()
+        progressTimer?.invalidate()
+        stateSubject.send(.paused(currentTime: currentTime, duration: duration))
     }
 
     func stop() {
-        // TODO: 구현 순서
-        // 1. progressTimer?.invalidate()
-        // 2. audioPlayer?.stop()
-        // 3. audioPlayer?.currentTime = 0
-        // 4. stateSubject.send(.idle)
+        progressTimer?.invalidate()
+        audioPlayer?.stop()
+        audioPlayer?.currentTime = 0
+        stateSubject.send(.idle)
     }
 
     func seek(to time: TimeInterval) {
-        // TODO: audioPlayer?.currentTime = time
-        // 현재 상태에 따라 playing/paused 상태 업데이트
+        audioPlayer?.currentTime = time
+        if isPlaying {
+            stateSubject.send(.playing(currentTime: currentTime, duration: duration))
+        } else {
+            stateSubject.send(.paused(currentTime: currentTime, duration: duration))
+        }
     }
+    
+}
 
-    // TODO: AVAudioPlayerDelegate 구현
-    // - audioPlayerDidFinishPlaying(_:successfully:)
-    //   progressTimer?.invalidate()
-    //   stateSubject.send(.finished)
-    //
-    // - audioPlayerDecodeErrorDidOccur(_:error:)
-    //   stateSubject.send(.error(.unknown(...)))
+
+extension AudioPlayerService: AVAudioPlayerDelegate {
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        progressTimer?.invalidate()
+        stateSubject.send(.finished)
+    }
+    
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        if let error = error {
+            stateSubject.send(.error(.unknown(<#String#>)))
+        }
+    }
 }

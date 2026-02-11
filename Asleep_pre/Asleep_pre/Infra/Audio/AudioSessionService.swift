@@ -11,46 +11,36 @@ import AVFoundation
 /// - AVAudioSession 싱글턴을 관리
 /// - 백그라운드 녹음을 위한 세션 카테고리 설정
 final class AudioSessionService: AudioSessionProtocol {
-
-    // TODO: AVAudioSession.sharedInstance() 활용
-    // - activateRecordingSession():
-    //   setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
-    //   setActive(true)
-    //
-    // - activatePlaybackSession():
-    //   setCategory(.playback, mode: .default)
-    //   setActive(true)
-    //
-    // - deactivateSession():
-    //   setActive(false, options: .notifyOthersOnDeactivation)
-    //
-    // - requestMicrophonePermission():
-    //   AVAudioApplication.requestRecordPermission()
-    //
-    // - checkMicrophonePermission():
-    //   AVAudioApplication.shared.recordPermission == .granted
-    //
     // ⚠️ 백그라운드 녹음: Info.plist의 UIBackgroundModes에 "audio" 필수
 
     func activateRecordingSession() throws {
-        // TODO: 구현
+        let session = AVAudioSession.sharedInstance()
+        
+        try session.setCategory(
+            .playAndRecord,
+            mode: .measurement,
+            options: [.defaultToSpeaker, .allowBluetoothA2DP, .allowBluetoothHFP, .allowAirPlay]
+        )
+        
+        try session.setActive(true)
     }
 
     func activatePlaybackSession() throws {
-        // TODO: 구현
+        let session = AVAudioSession.sharedInstance()
+        
+        try session.setCategory(.playback, mode: .default)
+        try session.setActive(true)
     }
 
     func deactivateSession() throws {
-        // TODO: 구현
+        try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     func requestMicrophonePermission() async -> Bool {
-        // TODO: 구현
-        return false
+        return await AVAudioApplication.requestRecordPermission()
     }
 
     func checkMicrophonePermission() -> Bool {
-        // TODO: 구현
-        return false
+        return AVAudioApplication.shared.recordPermission == .granted
     }
 }

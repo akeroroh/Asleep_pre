@@ -18,9 +18,18 @@ struct MeteringLevel: Identifiable, Codable {
     let peakPower: Float
     /// 0.0 ~ 1.0 정규화된 레벨 (그래프 표시용)
     var normalizedLevel: Float {
-        // TODO: averagePower를 0~1 범위로 정규화하는 로직 구현
+        let minDb: Float = -160.0
+        
+        if averagePower < minDb {
+            return 0.0
+        }
+        
+        if averagePower >= 0.0 {
+            return 1.0
+        }
+        
         // dB 범위: -160 ~ 0 → 0.0 ~ 1.0
-        return 0
+        return (averagePower - minDb) / abs(minDb)
     }
 
     init(id: UUID = UUID(), time: TimeInterval, averagePower: Float, peakPower: Float) {
