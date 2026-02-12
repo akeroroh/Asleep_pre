@@ -7,51 +7,66 @@
 
 import SwiftUI
 
-/// 녹음 목록의 개별 셀 컴포넌트
-/// - 파일명, 날짜, 녹음 길이 표시
-/// - 미니 파형 미리보기 (선택)
 struct RecordingRowView: View {
-
-    // TODO: 파라미터
-    // - let recording: Recording
+    let recording: Recording
 
     var body: some View {
-        // TODO: UI 구현
-        //
-        // HStack(spacing: 12) {
-        //   // 아이콘
-        //   Image(systemName: "waveform")
-        //     .foregroundStyle(.blue)
-        //     .frame(width: 40, height: 40)
-        //     .background(.blue.opacity(0.1))
-        //     .clipShape(RoundedRectangle(cornerRadius: 8))
-        //
-        //   // 정보
-        //   VStack(alignment: .leading, spacing: 4) {
-        //     Text(recording.fileName)
-        //       .font(.headline)
-        //       .lineLimit(1)
-        //
-        //     HStack {
-        //       Text(DateFormatter.recordingDateFormatter.string(from: recording.createdAt))
-        //       Text("·")
-        //       Text(recording.duration.formattedTime)
-        //     }
-        //     .font(.caption)
-        //     .foregroundStyle(.secondary)
-        //   }
-        //
-        //   Spacer()
-        //
-        //   Image(systemName: "chevron.right")
-        //     .foregroundStyle(.tertiary)
-        // }
-        // .padding(.vertical, 4)
+        VStack(alignment: .leading, spacing: 12) {
+            // 상단: 파일명 + 시간 정보
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(recording.fileName)
+                        .font(.headline)
+                        .lineLimit(1)
 
-        Text("Recording Row")
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+
+                        Text(recording.duration.formattedTime)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text("·")
+                            .foregroundStyle(.secondary)
+
+                        Text(DateFormatter.recordingDateFormatter.string(from: recording.createdAt))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+
+            // 하단: 미니 파형 그래프
+            MiniWaveformView(
+                levels: recording.meteringLevels,
+                barColor: .blue.opacity(0.7)
+            )
+            .frame(height: 36)
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }
 
 #Preview {
-    RecordingRowView()
+    let sample = Recording(
+        fileName: "녹음 2026.02.10",
+        duration: 185,
+        fileURL: URL(fileURLWithPath: "/tmp/test.m4a"),
+        meteringLevels: (0..<80).map { _ in Float.random(in: 0.05...0.9) }
+    )
+
+    RecordingRowView(recording: sample)
+        .padding()
+        .background(Color(.systemGroupedBackground))
 }

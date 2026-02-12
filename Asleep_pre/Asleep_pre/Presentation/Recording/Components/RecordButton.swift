@@ -7,42 +7,85 @@
 
 import SwiftUI
 
-/// 녹음 시작/중지 버튼 컴포넌트
-/// - 상태에 따라 아이콘/색상 변경
-/// - idle: 빨간 원 (녹음 시작)
-/// - recording: 빨간 사각형 (녹음 중지)
-/// - paused: 빨간 원 (녹음 재개)
 struct RecordButton: View {
+    let isRecording: Bool
+    let onTap: () -> Void
 
-    // TODO: 파라미터
-    // - let state: RecordingState
-    // - let onTap: () -> Void
-    // - let onLongPress: (() -> Void)?  ← 일시정지용 (선택)
+    @State private var isPulsing = false
+    @State private var glowOpacity: CGFloat = 0.4
+
+    private var buttonColor: Color {
+        isRecording ? AppTheme.recordActive : AppTheme.accent
+    }
 
     var body: some View {
-        // TODO: UI 구현
-        //
-        // Button(action: onTap) {
-        //   ZStack {
-        //     Circle()
-        //       .fill(.red.opacity(0.2))
-        //       .frame(width: 80, height: 80)
-        //
-        //     switch state:
-        //       case .idle, .ready, .paused:
-        //         Circle().fill(.red).frame(width: 60, height: 60)
-        //       case .recording:
-        //         RoundedRectangle(cornerRadius: 8).fill(.red).frame(width: 32, height: 32)
-        //       default: EmptyView()
-        //   }
-        // }
-        // .animation(.easeInOut(duration: 0.2), value: state)
-        // ⚠️ 녹음 중 pulse 애니메이션 추가 고려
+        Button(action: onTap) {
+            ZStack {
+                // 글로우 배경
+                Circle()
+                    .fill(buttonColor.opacity(0.15))
+                    .frame(width: 140, height: 140)
+                    .blur(radius: 20)
 
-        Text("Record Button")
+                // 외곽 링
+                Circle()
+                    .stroke(buttonColor.opacity(0.3), lineWidth: 3)
+                    .frame(width: 100, height: 100)
+
+                // 녹음 중 pulse 링
+                if isRecording {
+                    Circle()
+                        .stroke(AppTheme.recordActive.opacity(0.4), lineWidth: 2)
+                        .frame(width: 120, height: 120)
+                        .scaleEffect(isPulsing ? 1.3 : 1.0)
+                        .opacity(isPulsing ? 0.0 : 0.6)
+                }
+
+                // 내부 아이콘
+                if isRecording {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(AppTheme.recordActive)
+                        .frame(width: 32, height: 32)
+                        .shadow(color: AppTheme.recordActive.opacity(0.5), radius: 10)
+                } else {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [AppTheme.accent, AppTheme.accentLight],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 72, height: 72)
+                        .shadow(color: AppTheme.accent.opacity(0.4), radius: 12)
+                        .overlay(
+                            Image(systemName: "mic.fill")
+                                .font(.system(size: 28))
+                                .foregroundStyle(.white)
+                        )
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.25), value: isRecording)
+        .onChange(of: isRecording) { _, newValue in
+            if newValue {
+                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: false)) {
+                    isPulsing = true
+                }
+            } else {
+                isPulsing = false
+            }
+        }
     }
 }
 
 #Preview {
-    RecordButton()
+    ZStack {
+        AppTheme.background.ignoresSafeArea()
+        VStack(spacing: 60) {
+            RecordButton(isRecording: false, onTap: {})
+            RecordButton(isRecording: true, onTap: {})
+        }
+    }
 }

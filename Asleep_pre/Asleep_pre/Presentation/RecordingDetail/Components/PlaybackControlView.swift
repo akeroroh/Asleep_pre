@@ -7,45 +7,55 @@
 
 import SwiftUI
 
-/// 재생 컨트롤 버튼 그룹
-/// - 10초 뒤로 / 재생·일시정지 / 10초 앞으로 / 정지
 struct PlaybackControlView: View {
-
-    // TODO: 파라미터
-    // - let isPlaying: Bool
-    // - let onPlayPause: () -> Void
-    // - let onStop: () -> Void
-    // - let onSkipBackward: () -> Void
-    // - let onSkipForward: () -> Void
+    let isPlaying: Bool
+    let onPlayPause: () -> Void
+    let onSkipBackward: () -> Void
+    let onSkipForward: () -> Void
 
     var body: some View {
-        // TODO: UI 구현
-        //
-        // HStack(spacing: 32) {
-        //   // 10초 뒤로
-        //   Button(action: onSkipBackward) {
-        //     Image(systemName: "gobackward.10")
-        //       .font(.title2)
-        //   }
-        //
-        //   // 재생/일시정지
-        //   Button(action: onPlayPause) {
-        //     Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
-        //       .font(.system(size: 56))
-        //       .foregroundStyle(.blue)
-        //   }
-        //
-        //   // 10초 앞으로
-        //   Button(action: onSkipForward) {
-        //     Image(systemName: "goforward.10")
-        //       .font(.title2)
-        //   }
-        // }
+        HStack(spacing: 40) {
+            // 10초 뒤로
+            Button(action: onSkipBackward) {
+                Image(systemName: "gobackward.10")
+                    .font(.system(size: 24))
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+            .buttonStyle(.plain)
 
-        Text("Playback Controls")
+            // 재생/일시정지
+            Button(action: onPlayPause) {
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.accent)
+                        .frame(width: 64, height: 64)
+                        .shadow(color: AppTheme.accent.opacity(0.4), radius: 12)
+
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.white)
+                        .offset(x: isPlaying ? 0 : 2)
+                }
+            }
+            .buttonStyle(.plain)
+
+            // 10초 앞으로
+            Button(action: onSkipForward) {
+                Image(systemName: "goforward.10")
+                    .font(.system(size: 24))
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+            .buttonStyle(.plain)
+        }
     }
 }
 
 #Preview {
-    PlaybackControlView()
+    ZStack {
+        AppTheme.background.ignoresSafeArea()
+        VStack(spacing: 30) {
+            PlaybackControlView(isPlaying: false, onPlayPause: {}, onSkipBackward: {}, onSkipForward: {})
+            PlaybackControlView(isPlaying: true, onPlayPause: {}, onSkipBackward: {}, onSkipForward: {})
+        }
+    }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Recording: Identifiable, Codable {
+struct Recording: Identifiable, Codable, Hashable {
     let id: UUID
     let fileName: String
     let createdAt: Date
