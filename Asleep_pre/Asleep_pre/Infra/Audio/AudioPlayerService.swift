@@ -44,7 +44,7 @@ final class AudioPlayerService: NSObject, AudioPlayerProtocol {
             
             stateSubject.send(.playing(currentTime: currentTime, duration: duration))
         } catch {
-            stateSubject.send(.error(.unknown(<#String#>)))
+//            stateSubject.send(.error(.unknown(<#String#>)))
             throw error
         }
     }
@@ -83,7 +83,7 @@ extension AudioPlayerService: AVAudioPlayerDelegate {
     
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
         if let error = error {
-            stateSubject.send(.error(.unknown(<#String#>)))
+//            stateSubject.send(.error(.unknown(<#String#>)))
         }
     }
 }

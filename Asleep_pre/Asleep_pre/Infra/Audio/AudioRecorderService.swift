@@ -55,7 +55,7 @@ final class AudioRecorderService: NSObject, AudioRecorderProtocol {
         if audioRecorder?.record() == true {
             startMeteringTimer()
         } else {
-            stateSubject.send(.error(.unknown(<#String#>)))
+//            stateSubject.send(.error(.unknown(<#String#>)))
         }
     }
     
@@ -104,11 +104,11 @@ extension AudioRecorderService: AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         meteringTimer?.invalidate()
         if !flag {
-            stateSubject.send(.error(.unknown(<#String#>)))
+//            stateSubject.send(.error(.unknown(<#String#>)))
         }
     }
     
     func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
-        stateSubject.send(.error(.unknown(<#T##String#>)))
+//        stateSubject.send(.error(.unknown(<#T##String#>)))
     }
 }

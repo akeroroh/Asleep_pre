@@ -7,35 +7,55 @@
 
 import SwiftUI
 
-/// 녹음 경과 시간 표시 컴포넌트
-/// - "00:00" 또는 "00:00:00" 형식
-/// - 녹음 중 빨간 인디케이터 표시
 struct RecordingTimerView: View {
+    let date: Date
+    let elapsedTime: TimeInterval
+    let isRecording: Bool
 
-    // TODO: 파라미터
-    // - let elapsedTime: TimeInterval
-    // - let isRecording: Bool
+    @State private var isBlinking = false
 
     var body: some View {
-        // TODO: UI 구현
-        //
-        // HStack(spacing: 8) {
-        //   if isRecording {
-        //     Circle()
-        //       .fill(.red)
-        //       .frame(width: 8, height: 8)
-        //       .opacity(blinkAnimation)  ← 깜빡임 애니메이션
-        //   }
-        //
-        //   Text(elapsedTime.formattedTime)
-        //     .font(.system(size: 48, weight: .light, design: .monospaced))
-        //     .foregroundStyle(isRecording ? .primary : .secondary)
-        // }
+        VStack(spacing: 12) {
+            // 경과 시간
+            HStack(spacing: 8) {
+                if isRecording {
+                    Circle()
+                        .fill(AppTheme.recordActive)
+                        .frame(width: 8, height: 8)
+                        .opacity(isBlinking ? 0.2 : 1.0)
+                        .shadow(color: AppTheme.recordActive.opacity(0.6), radius: 4)
+                }
 
-        Text("00:00")
+                Text(elapsedTime.formattedLongTime)
+                    .font(.system(size: 48, weight: .ultraLight, design: .monospaced))
+                    .foregroundStyle(isRecording ? AppTheme.textPrimary : AppTheme.textSecondary)
+            }
+
+            // 오늘 날짜
+            Text(DateFormatter.recordingDateFormatter.string(from: date))
+                .font(.system(size: 14))
+                .foregroundStyle(AppTheme.textTertiary)
+        }
+        .onChange(of: isRecording) { _, newValue in
+            if newValue {
+                withAnimation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true)) {
+                    isBlinking = true
+                }
+            } else {
+                withAnimation(.none) {
+                    isBlinking = false
+                }
+            }
+        }
     }
 }
 
 #Preview {
-    RecordingTimerView()
+    ZStack {
+        AppTheme.background.ignoresSafeArea()
+        VStack(spacing: 40) {
+            RecordingTimerView(date: Date(), elapsedTime: 0, isRecording: false)
+            RecordingTimerView(date: Date(), elapsedTime: 4325, isRecording: true)
+        }
+    }
 }

@@ -8,53 +8,75 @@
 import SwiftUI
 import Charts
 
-/// 녹음 결과 파형 그래프 (Swift Charts)
-/// - 녹음 완료 후 전체 데시벨 레벨을 시각화
-/// - 현재 재생 위치를 RuleMark로 표시
 struct WaveformChartView: View {
-
-    // TODO: 파라미터
-    // - let levels: [MeteringLevel]          ← 전체 미터링 데이터
-    // - let currentPosition: Double          ← 재생 진행률 (0.0 ~ 1.0)
-    // - var barColor: Color = .blue
-    // - var positionIndicatorColor: Color = .red
+    let levels: [Float]
+    var playbackProgress: Double = 0.0
+    var barCount: Int = 100
 
     var body: some View {
-        // TODO: UI 구현 (Swift Charts)
-        //
-        // Chart {
-        //   ForEach(levels) { level in
-        //     // 막대형 그래프 (BarMark)
-        //     BarMark(
-        //       x: .value("Time", level.time),
-        //       y: .value("Level", level.normalizedLevel)
-        //     )
-        //     .foregroundStyle(
-        //       level.time <= currentTimeFromProgress
-        //         ? barColor              ← 재생된 부분
-        //         : barColor.opacity(0.3) ← 아직 재생 안 된 부분
-        //     )
-        //     .cornerRadius(1)
-        //   }
-        //
-        //   // 현재 재생 위치 표시선
-        //   if currentPosition > 0 {
-        //     RuleMark(x: .value("Position", currentTimeFromProgress))
-        //       .foregroundStyle(positionIndicatorColor)
-        //       .lineStyle(StrokeStyle(lineWidth: 2))
-        //   }
-        // }
-        // .chartXAxis(.hidden)
-        // .chartYAxis(.hidden)
-        // .chartYScale(domain: 0...1)
-        //
-        // ⚠️ 데이터가 많을 경우 다운샘플링 필요
-        //    - levels 배열을 화면 너비에 맞게 리샘플링
+        let displayLevels = downsample(to: barCount)
 
-        Text("Waveform Chart")
+        Chart {
+            ForEach(Array(displayLevels.enumerated()), id: \.offset) { index, level in
+                let time = Double(index)
+                let progressTime = Double(displayLevels.count) * playbackProgress
+
+                BarMark(
+                    x: .value("Time", time),
+                    y: .value("Level", level)
+                )
+                .foregroundStyle(
+                    time <= progressTime
+                        ? AppTheme.accent
+                        : AppTheme.accent.opacity(0.3)
+                )
+                .cornerRadius(1)
+            }
+
+            // 재생 위치 인디케이터
+            if playbackProgress > 0 && playbackProgress < 1 {
+                let position = Double(displayLevels.count) * playbackProgress
+                RuleMark(x: .value("Position", position))
+                    .foregroundStyle(AppTheme.textPrimary)
+                    .lineStyle(StrokeStyle(lineWidth: 1.5))
+            }
+        }
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .chartYScale(domain: 0...1)
+        .chartPlotStyle { plotArea in
+            plotArea
+                .background(Color.clear)
+        }
+    }
+
+    private func downsample(to count: Int) -> [Float] {
+        guard !levels.isEmpty else {
+            return Array(repeating: 0.05, count: count)
+        }
+
+        guard levels.count > count else {
+            return levels
+        }
+
+        let chunkSize = levels.count / count
+        return stride(from: 0, to: levels.count, by: chunkSize)
+            .prefix(count)
+            .map { start in
+                let end = min(start + chunkSize, levels.count)
+                let chunk = levels[start..<end]
+                return chunk.reduce(0, +) / Float(chunk.count)
+            }
     }
 }
 
 #Preview {
-    WaveformChartView()
+    let sampleLevels: [Float] = (0..<300).map { _ in Float.random(in: 0.03...0.95) }
+
+    ZStack {
+        AppTheme.background.ignoresSafeArea()
+        WaveformChartView(levels: sampleLevels, playbackProgress: 0.4)
+            .frame(height: 180)
+            .padding()
+    }
 }
