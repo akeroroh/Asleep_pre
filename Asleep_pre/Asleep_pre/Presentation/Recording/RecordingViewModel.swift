@@ -14,53 +14,177 @@ import Combine
 @Observable
 final class RecordingViewModel {
 
-    // TODO: 의존성 주입
-    // - private let audioSession: AudioSessionProtocol
-    // - private let recorder: AudioRecorderProtocol
-    // - private let repository: RecordingRepositoryProtocol
-    // - private var cancellables = Set<AnyCancellable>()
+    // MARK: - 의존성
 
-    // TODO: 상태 프로퍼티
-    // - var recordingState: RecordingState = .idle
-    // - var selectedQuality: AudioQuality = .high
-    // - var elapsedTime: TimeInterval = 0
-    // - var currentDecibel: Float = 0
-    // - var liveMeteringLevels: [MeteringLevel] = []  ← 실시간 파형 데이터
-    // - var showPermissionAlert: Bool = false
-    // - var errorMessage: String?
+    private let audioSession: AudioSessionProtocol
+    private let recorder: AudioRecorderProtocol
+    private let repository: RecordingRepositoryProtocol
+    private var cancellables = Set<AnyCancellable>()
 
-    // TODO: 메서드
-    //
-    // 1. initialize()
-    //    - audioSession.requestMicrophonePermission()
-    //    - 권한 거부 시 showPermissionAlert = true
-    //    - recorder.statePublisher 구독 → recordingState 업데이트
-    //    - recorder.meteringPublisher 구독 → liveMeteringLevels에 append
-    //
-    // 2. toggleRecording()
-    //    - idle/ready → startRecording()
-    //    - recording → stopRecording()
-    //    - paused → resumeRecording()
-    //
-    // 3. startRecording()
-    //    - audioSession.activateRecordingSession()
-    //    - let fileURL = repository.generateNewFileURL()
-    //    - recorder.startRecording(quality: selectedQuality, to: fileURL)
-    //    - liveMeteringLevels 초기화
-    //
-    // 4. stopRecording()
-    //    - let duration = recorder.stopRecording()
-    //    - Recording 모델 생성 (meteringLevels 포함)
-    //    - repository.save(recording)
-    //    - audioSession.deactivateSession()
-    //    - elapsedTime = 0
-    //
-    // 5. pauseRecording()
-    //    - recorder.pauseRecording()
-    //
-    // 6. resumeRecording()
-    //    - recorder.resumeRecording()
-    //
-    // 7. updateQuality(_ quality: AudioQuality)
-    //    - ⚠️ 녹음 중에는 변경 불가 (recordingState == .idle일 때만)
+    // MARK: - 상태 프로퍼티
+
+    var recordingState: RecordingState = .idle
+    var selectedQuality: AudioQuality = .high
+    var elapsedTime: TimeInterval = 0
+    var currentDecibel: Float = 0
+    var liveMeteringLevels: [MeteringLevel] = []
+    var showPermissionAlert: Bool = false
+    var showSavedAlert: Bool = false
+    var savedDuration: TimeInterval = 0
+    var errorMessage: String?
+
+    /// 현재 녹음 중인 파일의 URL
+    private var currentFileURL: URL?
+    /// 녹음 시작 시각
+    private var recordingStartDate: Date?
+
+    // MARK: - 편의 프로퍼티
+
+    var isRecording: Bool {
+        if case .recording = recordingState { return true }
+        return false
+    }
+
+    var isPaused: Bool {
+        if case .paused = recordingState { return true }
+        return false
+    }
+
+    // MARK: - Init
+
+    init(audioSession: AudioSessionProtocol, recorder: AudioRecorderProtocol, repository: RecordingRepositoryProtocol) {
+        self.audioSession = audioSession
+        self.recorder = recorder
+        self.repository = repository
+    }
+
+    // MARK: - 초기화
+
+    func initialize() {
+        // 녹음 상태 구독
+        recorder.statePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] state in
+                guard let self else { return }
+                self.recordingState = state
+
+                switch state {
+                case .recording(let duration, let decibel):
+                    self.elapsedTime = duration
+                    self.currentDecibel = decibel
+                case .paused(let duration):
+                    self.elapsedTime = duration
+                case .stopped:
+                    break
+                case .error(let error):
+                    self.errorMessage = "\(error)"
+                default:
+                    break
+                }
+            }
+            .store(in: &cancellables)
+
+        // 미터링 데이터 구독
+        recorder.meteringPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] level in
+                self?.liveMeteringLevels.append(level)
+            }
+            .store(in: &cancellables)
+
+        // 마이크 권한 요청
+        Task { @MainActor in
+            let granted = await audioSession.requestMicrophonePermission()
+            if granted {
+                recordingState = .ready
+            } else {
+                showPermissionAlert = true
+                recordingState = .error(.permissionDenied)
+            }
+        }
+    }
+
+    // MARK: - 녹음 토글
+
+    func toggleRecording() {
+        switch recordingState {
+        case .idle, .ready, .stopped:
+            startRecording()
+        case .recording:
+            stopRecording()
+        case .paused:
+            resumeRecording()
+        default:
+            break
+        }
+    }
+
+    // MARK: - 녹음 시작
+
+    private func startRecording() {
+        do {
+            try audioSession.activateRecordingSession()
+
+            let fileURL = repository.generateNewFileURL()
+            currentFileURL = fileURL
+            recordingStartDate = Date()
+            liveMeteringLevels = []
+            elapsedTime = 0
+
+            try recorder.startRecording(quality: selectedQuality, to: fileURL)
+        } catch {
+            errorMessage = "녹음 시작 실패: \(error.localizedDescription)"
+            recordingState = .error(.sessionSetupFailed)
+        }
+    }
+
+    // MARK: - 녹음 중지 & 저장
+
+    private func stopRecording() {
+        let duration = recorder.stopRecording() ?? elapsedTime
+        savedDuration = duration
+
+        guard let fileURL = currentFileURL else { return }
+
+        let meteringFloats = liveMeteringLevels.map { $0.normalizedLevel }
+
+        let recording = Recording(
+            fileName: "녹음 \(DateFormatter.fileNameFormatter.string(from: recordingStartDate ?? Date()))",
+            createdAt: recordingStartDate ?? Date(),
+            duration: duration,
+            fileURL: fileURL,
+            meteringLevels: meteringFloats
+        )
+
+        do {
+            try repository.save(recording)
+        } catch {
+            errorMessage = "녹음 저장 실패: \(error.localizedDescription)"
+        }
+
+        try? audioSession.deactivateSession()
+        showSavedAlert = true
+
+        currentFileURL = nil
+        recordingStartDate = nil
+        elapsedTime = 0
+        recordingState = .ready
+    }
+
+    // MARK: - 일시정지 / 재개
+
+    func pauseRecording() {
+        recorder.pauseRecording()
+    }
+
+    func resumeRecording() {
+        recorder.resumeRecording()
+    }
+
+    // MARK: - 음질 변경
+
+    func updateQuality(_ quality: AudioQuality) {
+        guard !isRecording && !isPaused else { return }
+        selectedQuality = quality
+    }
 }

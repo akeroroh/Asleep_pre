@@ -8,11 +8,10 @@
 import SwiftUI
 
 struct RecordingDetailView: View {
-    let recording: Recording
+    @Environment(AppDependencyContainer.self) private var container
+    @State private var viewModel: RecordingDetailViewModel?
 
-    // TODO: ViewModel 연동 후 교체
-    @State private var isPlaying = false
-    @State private var playbackProgress: Double = 0.0
+    let recording: Recording
 
     private var startTimeStr: String {
         DateFormatter.timeOnlyFormatter.string(from: recording.createdAt)
@@ -48,6 +47,15 @@ struct RecordingDetailView: View {
         .toolbarBackground(AppTheme.background, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear {
+            if viewModel == nil {
+                viewModel = container.makeRecordingDetailViewModel(recording: recording)
+                viewModel?.initialize()
+            }
+        }
+        .onDisappear {
+            viewModel?.stopPlayback()
+        }
     }
 
     // MARK: - 녹음 정보
@@ -103,7 +111,7 @@ struct RecordingDetailView: View {
 
             WaveformChartView(
                 levels: recording.meteringLevels,
-                playbackProgress: playbackProgress
+                playbackProgress: viewModel?.playbackProgress ?? 0
             )
             .frame(height: 180)
 
@@ -129,26 +137,26 @@ struct RecordingDetailView: View {
     private var controlCard: some View {
         VStack(spacing: 20) {
             PlaybackSliderView(
-                value: $playbackProgress,
+                value: Binding(
+                    get: { viewModel?.seekPosition ?? 0 },
+                    set: { viewModel?.seek(to: $0) }
+                ),
                 duration: recording.duration,
-                onSeek: { _ in
-                    // TODO: player.seek(to:) 연동
+                onSeek: { position in
+                    viewModel?.seek(to: position)
                 }
             )
 
             PlaybackControlView(
-                isPlaying: isPlaying,
+                isPlaying: viewModel?.isPlaying ?? false,
                 onPlayPause: {
-                    isPlaying.toggle()
-                    // TODO: player.play/pause 연동
+                    viewModel?.togglePlayback()
                 },
                 onSkipBackward: {
-                    playbackProgress = max(0, playbackProgress - 10.0 / recording.duration)
-                    // TODO: player.seek 연동
+                    viewModel?.skip(seconds: -10)
                 },
                 onSkipForward: {
-                    playbackProgress = min(1, playbackProgress + 10.0 / recording.duration)
-                    // TODO: player.seek 연동
+                    viewModel?.skip(seconds: 10)
                 }
             )
         }
@@ -184,4 +192,5 @@ struct RecordingDetailView: View {
             )
         )
     }
+    .environment(AppDependencyContainer())
 }
