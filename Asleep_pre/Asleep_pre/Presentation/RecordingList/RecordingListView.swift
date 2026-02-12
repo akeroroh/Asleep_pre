@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RecordingListView: View {
+    // MARK: Property
     @Environment(AppDependencyContainer.self) private var container
     @State private var viewModel: RecordingListViewModel?
 
@@ -28,7 +29,15 @@ struct RecordingListView: View {
     private var recordings: [Recording] {
         viewModel?.recordings ?? []
     }
+    
+    // MARK: Contants
+    fileprivate enum RecordingListViewConstants {
+        static let cardPadding: CGFloat = 16
+        static let cardRadius: CGFloat = 20
+        static let cardBackgroundPadding: EdgeInsets = .init(top: 40, leading: 12, bottom: 40, trailing: 12)
+    }
 
+    // MARK: Body
     var body: some View {
         NavigationStack {
             ZStack {
@@ -37,17 +46,16 @@ struct RecordingListView: View {
 
                 // 글래스 카드
                 cardContent
-                    .padding(16)
+                    .padding(RecordingListViewConstants.cardPadding)
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: RecordingListViewConstants.cardRadius)
                             .fill(AppTheme.cardBackground)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 20)
+                                RoundedRectangle(cornerRadius: RecordingListViewConstants.cardRadius)
                                     .stroke(AppTheme.cardBorder, lineWidth: 1)
                             )
                     )
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 40)
+                    .padding(RecordingListViewConstants.cardBackgroundPadding)
             }
             .navigationDestination(for: Recording.self) { recording in
                 RecordingDetailView(recording: recording)

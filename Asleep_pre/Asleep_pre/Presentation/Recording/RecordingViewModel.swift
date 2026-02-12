@@ -8,10 +8,8 @@
 import Foundation
 import Combine
 
-/// 녹음 화면의 비즈니스 로직
-/// - AudioRecorderProtocol, AudioSessionProtocol, RecordingRepositoryProtocol에 의존
-/// - @Observable 매크로 사용 (iOS 17+)
 @Observable
+@MainActor
 final class RecordingViewModel {
 
     // MARK: - 의존성
@@ -93,7 +91,7 @@ final class RecordingViewModel {
             .store(in: &cancellables)
 
         // 마이크 권한 요청
-        Task { @MainActor in
+        Task {
             let granted = await audioSession.requestMicrophonePermission()
             if granted {
                 recordingState = .ready
@@ -112,8 +110,6 @@ final class RecordingViewModel {
             startRecording()
         case .recording:
             stopRecording()
-        case .paused:
-            resumeRecording()
         default:
             break
         }
@@ -169,22 +165,5 @@ final class RecordingViewModel {
         recordingStartDate = nil
         elapsedTime = 0
         recordingState = .ready
-    }
-
-    // MARK: - 일시정지 / 재개
-
-    func pauseRecording() {
-        recorder.pauseRecording()
-    }
-
-    func resumeRecording() {
-        recorder.resumeRecording()
-    }
-
-    // MARK: - 음질 변경
-
-    func updateQuality(_ quality: AudioQuality) {
-        guard !isRecording && !isPaused else { return }
-        selectedQuality = quality
     }
 }

@@ -12,19 +12,13 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            RecordingView()
-                .tabItem {
-                    Image(systemName: "mic.fill")
-                    Text("녹음")
-                }
-                .tag(0)
+            Tab("녹음", systemImage: "mic.fill", value: 0) {
+                RecordingView()
+            }
 
-            RecordingListView()
-                .tabItem {
-                    Image(systemName: "chart.bar.fill")
-                    Text("기록")
-                }
-                .tag(1)
+            Tab("기록", systemImage: "chart.bar.fill", value: 1) {
+                RecordingListView()
+            }
         }
         .tint(AppTheme.accent)
         .onAppear {
@@ -49,4 +43,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environment(AppDependencyContainer())
 }

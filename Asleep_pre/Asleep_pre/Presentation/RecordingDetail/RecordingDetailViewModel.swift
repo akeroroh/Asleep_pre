@@ -10,6 +10,7 @@ import Combine
 
 /// 녹음 상세 화면의 비즈니스 로직
 @Observable
+@MainActor
 final class RecordingDetailViewModel {
 
     // MARK: - 의존성
@@ -152,8 +153,8 @@ final class RecordingDetailViewModel {
         playbackProgress = progress
     }
 
-    deinit {
-        progressTimer?.invalidate()
-        player.stop()
-    }
+//    deinit {
+//        progressTimer?.invalidate()
+//        player.stop()
+//    }
 }

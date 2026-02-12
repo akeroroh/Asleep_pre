@@ -11,6 +11,7 @@ import Foundation
 /// - Protocol ↔ 구현체 바인딩
 /// - ViewModel에 의존성 주입
 @Observable
+@MainActor
 final class AppDependencyContainer {
 
     // MARK: - Infra 레이어 인스턴스
