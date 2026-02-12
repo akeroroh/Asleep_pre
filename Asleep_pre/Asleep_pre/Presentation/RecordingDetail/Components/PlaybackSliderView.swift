@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PlaybackSliderView: View {
+    // MARK: Property
     @Binding var value: Double
     let duration: TimeInterval
     let onSeek: (Double) -> Void
@@ -21,9 +22,18 @@ struct PlaybackSliderView: View {
     private var durationText: String {
         duration.formattedLongTime
     }
-
+    
+    // MARK: Constants
+    fileprivate enum PlaybackSliderViewConstants {
+        static let stackSpacing: CGFloat = 6
+        
+        static let currentTimeFont: Font = .system(size: 12, design: .monospaced)
+        static let durationTextFont: Font = .system(size: 12, design: .monospaced)
+    }
+    
+    // MARK: Body
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: PlaybackSliderViewConstants.stackSpacing) {
             Slider(value: $value, in: 0...1) { editing in
                 isDragging = editing
                 if !editing {
@@ -34,11 +44,11 @@ struct PlaybackSliderView: View {
 
             HStack {
                 Text(currentTimeText)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(PlaybackSliderViewConstants.currentTimeFont)
                     .foregroundStyle(AppTheme.textSecondary)
                 Spacer()
                 Text(durationText)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(PlaybackSliderViewConstants.durationTextFont)
                     .foregroundStyle(AppTheme.textSecondary)
             }
         }

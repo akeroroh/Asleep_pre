@@ -8,32 +8,45 @@
 import SwiftUI
 
 struct RecordingTimerView: View {
+    // MARK: Property
     let date: Date
     let elapsedTime: TimeInterval
     let isRecording: Bool
 
     @State private var isBlinking = false
+    
+    // MARK: Constants
+    fileprivate enum RecordingTimerViewConstants {
+        static let timerVStackSpacing: CGFloat = 12
+        static let timerHStackSpacing: CGFloat = 8
+        
+        static let timerCircleFrame: CGSize = .init(width: 8, height: 8)
+        
+        static let timerFont: Font = .system(size: 48, weight: .ultraLight, design: .monospaced)
+        static let todayFont: Font = .system(size: 14)
+    }
 
+    // MARK: Body
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: RecordingTimerViewConstants.timerVStackSpacing) {
             // 경과 시간
-            HStack(spacing: 8) {
+            HStack(spacing: RecordingTimerViewConstants.timerHStackSpacing) {
                 if isRecording {
                     Circle()
                         .fill(AppTheme.recordActive)
-                        .frame(width: 8, height: 8)
+                        .frame(width: RecordingTimerViewConstants.timerCircleFrame.width, height: RecordingTimerViewConstants.timerCircleFrame.height)
                         .opacity(isBlinking ? 0.2 : 1.0)
                         .shadow(color: AppTheme.recordActive.opacity(0.6), radius: 4)
                 }
 
                 Text(elapsedTime.formattedLongTime)
-                    .font(.system(size: 48, weight: .ultraLight, design: .monospaced))
+                    .font(RecordingTimerViewConstants.timerFont)
                     .foregroundStyle(isRecording ? AppTheme.textPrimary : AppTheme.textSecondary)
             }
 
             // 오늘 날짜
             Text(DateFormatter.recordingDateFormatter.string(from: date))
-                .font(.system(size: 14))
+                .font(RecordingTimerViewConstants.todayFont)
                 .foregroundStyle(AppTheme.textTertiary)
         }
         .onChange(of: isRecording) { _, newValue in

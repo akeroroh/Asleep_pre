@@ -8,11 +8,14 @@
 import SwiftUI
 
 struct PlaybackControlView: View {
+    // MARK: Property
     let isPlaying: Bool
     let onPlayPause: () -> Void
     let onSkipBackward: () -> Void
     let onSkipForward: () -> Void
-
+    
+    
+    // MARK: Bodyd
     var body: some View {
         HStack(spacing: 40) {
             // 10초 뒤로

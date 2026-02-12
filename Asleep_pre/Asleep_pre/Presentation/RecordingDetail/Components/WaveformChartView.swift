@@ -9,10 +9,12 @@ import SwiftUI
 import Charts
 
 struct WaveformChartView: View {
+    // MARK: Property
     let levels: [Float]
     var playbackProgress: Double = 0.0
     var barCount: Int = 100
 
+    // MARK: Body
     var body: some View {
         let displayLevels = downsample(to: barCount)
 

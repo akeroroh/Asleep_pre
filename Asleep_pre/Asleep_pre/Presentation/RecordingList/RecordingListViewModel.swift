@@ -10,6 +10,7 @@ import SwiftUI
 
 /// 녹음 목록 화면의 비즈니스 로직
 @Observable
+@MainActor
 final class RecordingListViewModel {
 
     // MARK: - 의존성
