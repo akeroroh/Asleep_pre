@@ -13,38 +13,37 @@ import Foundation
 @Observable
 final class AppDependencyContainer {
 
-    // TODO: 싱글 인스턴스 (앱 라이프사이클에 1개)
-    //
-    // ──── Infra 레이어 인스턴스 ────
-    // let audioSession: AudioSessionProtocol = AudioSessionService()
-    // let recorder: AudioRecorderProtocol = AudioRecorderService()
-    // let player: AudioPlayerProtocol = AudioPlayerService()
-    // let fileManager = RecordingFileManager()
-    // let repository: RecordingRepositoryProtocol = RecordingRepository(fileManager:)
-    //
-    // ──── ViewModel 팩토리 ────
-    //
-    // func makeRecordingViewModel() -> RecordingViewModel {
-    //     RecordingViewModel(
-    //         audioSession: audioSession,
-    //         recorder: recorder,
-    //         repository: repository
-    //     )
-    // }
-    //
-    // func makeRecordingListViewModel() -> RecordingListViewModel {
-    //     RecordingListViewModel(repository: repository)
-    // }
-    //
-    // func makeRecordingDetailViewModel(recording: Recording) -> RecordingDetailViewModel {
-    //     RecordingDetailViewModel(
-    //         player: player,
-    //         audioSession: audioSession,
-    //         recording: recording
-    //     )
-    // }
-    //
-    // ⚠️ Asleep_preApp.swift에서:
-    //   @State private var container = AppDependencyContainer()
-    //   .environment(container)
+    // MARK: - Infra 레이어 인스턴스
+
+    let audioSession: AudioSessionProtocol = AudioSessionService()
+    let recorder: AudioRecorderProtocol = AudioRecorderService()
+    let player: AudioPlayerProtocol = AudioPlayerService()
+    private let recordingFileManager = RecordingFileManager()
+    let repository: RecordingRepositoryProtocol
+
+    init() {
+        self.repository = RecordingRepository(fileManager: recordingFileManager)
+    }
+
+    // MARK: - ViewModel 팩토리
+
+    func makeRecordingViewModel() -> RecordingViewModel {
+        RecordingViewModel(
+            audioSession: audioSession,
+            recorder: recorder,
+            repository: repository
+        )
+    }
+
+    func makeRecordingListViewModel() -> RecordingListViewModel {
+        RecordingListViewModel(repository: repository)
+    }
+
+    func makeRecordingDetailViewModel(recording: Recording) -> RecordingDetailViewModel {
+        RecordingDetailViewModel(
+            player: player,
+            audioSession: audioSession,
+            recording: recording
+        )
+    }
 }

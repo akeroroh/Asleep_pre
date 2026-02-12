@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct RecordingListView: View {
-    // TODO: ViewModel 연동 후 교체
-    @State private var recordings: [Recording] = RecordingListView.sampleData
+    @Environment(AppDependencyContainer.self) private var container
+    @State private var viewModel: RecordingListViewModel?
 
     // 타임라인 설정
     private let totalHours: CGFloat = 24
@@ -23,6 +23,10 @@ struct RecordingListView: View {
         (0...23).map { hour in
             (String(format: "%02d", hour), CGFloat(hour) / totalHours)
         }
+    }
+
+    private var recordings: [Recording] {
+        viewModel?.recordings ?? []
     }
 
     var body: some View {
@@ -48,6 +52,12 @@ struct RecordingListView: View {
             .navigationDestination(for: Recording.self) { recording in
                 RecordingDetailView(recording: recording)
             }
+        }
+        .onAppear {
+            if viewModel == nil {
+                viewModel = container.makeRecordingListViewModel()
+            }
+            viewModel?.loadRecordings()
         }
     }
 
@@ -251,4 +261,5 @@ extension RecordingListView {
 
 #Preview {
     RecordingListView()
+        .environment(AppDependencyContainer())
 }

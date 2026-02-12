@@ -55,7 +55,7 @@ final class AudioRecorderService: NSObject, AudioRecorderProtocol {
         if audioRecorder?.record() == true {
             startMeteringTimer()
         } else {
-//            stateSubject.send(.error(.unknown(<#String#>)))
+            stateSubject.send(.error(.unknown("녹음 시작에 실패했습니다")))
         }
     }
     
@@ -104,11 +104,11 @@ extension AudioRecorderService: AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         meteringTimer?.invalidate()
         if !flag {
-//            stateSubject.send(.error(.unknown(<#String#>)))
+            stateSubject.send(.error(.unknown("녹음이 비정상적으로 종료되었습니다")))
         }
     }
-    
+
     func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
-//        stateSubject.send(.error(.unknown(<#T##String#>)))
+        stateSubject.send(.error(.unknown(error?.localizedDescription ?? "인코딩 오류가 발생했습니다")))
     }
 }
