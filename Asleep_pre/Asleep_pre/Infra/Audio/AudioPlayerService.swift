@@ -34,21 +34,28 @@ final class AudioPlayerService: NSObject, AudioPlayerProtocol {
     }
 
     func play(url: URL) throws {
+        // 이미 같은 파일이 로드되어 있으면 이어서 재생
+        if let player = audioPlayer, player.url == url {
+            player.play()
+            stateSubject.send(.playing(currentTime: currentTime, duration: duration))
+            return
+        }
+
+        // 새 파일이면 기존 재생 중지 후 새로 로드
         stop()
-        
+
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             audioPlayer?.delegate = self
             audioPlayer?.prepareToPlay()
             audioPlayer?.play()
-            
+
             stateSubject.send(.playing(currentTime: currentTime, duration: duration))
         } catch {
             stateSubject.send(.error(.unknown(error.localizedDescription)))
             throw error
         }
     }
-    
 
     func pause() {
         audioPlayer?.pause()
@@ -59,7 +66,7 @@ final class AudioPlayerService: NSObject, AudioPlayerProtocol {
     func stop() {
         progressTimer?.invalidate()
         audioPlayer?.stop()
-        audioPlayer?.currentTime = 0
+        audioPlayer = nil
         stateSubject.send(.idle)
     }
 
@@ -71,16 +78,14 @@ final class AudioPlayerService: NSObject, AudioPlayerProtocol {
             stateSubject.send(.paused(currentTime: currentTime, duration: duration))
         }
     }
-    
 }
-
 
 extension AudioPlayerService: AVAudioPlayerDelegate {
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         progressTimer?.invalidate()
         stateSubject.send(.finished)
     }
-    
+
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
         if let error = error {
             stateSubject.send(.error(.unknown(error.localizedDescription)))

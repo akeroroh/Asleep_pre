@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import UIKit
 
 @Observable
 @MainActor
@@ -90,6 +91,14 @@ final class RecordingViewModel {
             }
             .store(in: &cancellables)
 
+        // 포그라운드 복귀 시 경과 시간 동기화
+        NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.syncElapsedTime()
+            }
+            .store(in: &cancellables)
+
         // 마이크 권한 요청
         Task {
             let granted = await audioSession.requestMicrophonePermission()
@@ -100,6 +109,15 @@ final class RecordingViewModel {
                 recordingState = .error(.permissionDenied)
             }
         }
+    }
+
+    // MARK: - 포그라운드 복귀 시 시간 동기화
+
+    private func syncElapsedTime() {
+        guard recorder.isRecording else { return }
+        let actualTime = recorder.currentTime
+        elapsedTime = actualTime
+        recordingState = .recording(duration: actualTime, decibel: currentDecibel)
     }
 
     // MARK: - 녹음 토글
