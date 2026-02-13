@@ -18,7 +18,7 @@ enum AudioQuality: String, CaseIterable, Identifiable {
         switch self {
         case .low: return 12_000.0
         case .medium: return 22_050.0
-        case .high: return 44_100.0
+        case .high: return 48_000.0
         }
     }
 
@@ -26,7 +26,7 @@ enum AudioQuality: String, CaseIterable, Identifiable {
         switch self {
         case .low: return 32_000
         case .medium: return 64_000
-        case .high: return 128_000
+        case .high: return 192_000
         }
     }
 }

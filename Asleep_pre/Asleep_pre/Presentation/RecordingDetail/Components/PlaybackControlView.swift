@@ -14,14 +14,25 @@ struct PlaybackControlView: View {
     let onSkipBackward: () -> Void
     let onSkipForward: () -> Void
     
+    // MARK: Constants
+    fileprivate enum PlaybackControlViewConstants {
+        static let spacing: CGFloat = 40
+        static let playbackControlFont: Font = .system(size: 24)
+        
+        static let skipbackIcon: String = "gobackward.10"
+        static let skipforwardIcon: String = "goforward.10"
+        
+        static let playCircleFrame: CGSize = .init(width: 64, height: 64)
+        static let playImage: [String] = ["pause.fill", "play.fill"]
+    }
     
-    // MARK: Bodyd
+    // MARK: Body
     var body: some View {
-        HStack(spacing: 40) {
+        HStack(spacing: PlaybackControlViewConstants.spacing) {
             // 10초 뒤로
             Button(action: onSkipBackward) {
-                Image(systemName: "gobackward.10")
-                    .font(.system(size: 24))
+                Image(systemName: PlaybackControlViewConstants.skipbackIcon)
+                    .font(PlaybackControlViewConstants.playbackControlFont)
                     .foregroundStyle(AppTheme.textSecondary)
             }
             .buttonStyle(.plain)
@@ -31,11 +42,11 @@ struct PlaybackControlView: View {
                 ZStack {
                     Circle()
                         .fill(AppTheme.accent)
-                        .frame(width: 64, height: 64)
+                        .frame(width: PlaybackControlViewConstants.playCircleFrame.width, height: PlaybackControlViewConstants.playCircleFrame.height)
                         .shadow(color: AppTheme.accent.opacity(0.4), radius: 12)
 
-                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 24))
+                    Image(systemName: isPlaying ? PlaybackControlViewConstants.playImage[0] : PlaybackControlViewConstants.playImage[1])
+                        .font(PlaybackControlViewConstants.playbackControlFont)
                         .foregroundStyle(.white)
                         .offset(x: isPlaying ? 0 : 2)
                 }
@@ -44,8 +55,8 @@ struct PlaybackControlView: View {
 
             // 10초 앞으로
             Button(action: onSkipForward) {
-                Image(systemName: "goforward.10")
-                    .font(.system(size: 24))
+                Image(systemName: PlaybackControlViewConstants.skipforwardIcon)
+                    .font(PlaybackControlViewConstants.playbackControlFont)
                     .foregroundStyle(AppTheme.textSecondary)
             }
             .buttonStyle(.plain)

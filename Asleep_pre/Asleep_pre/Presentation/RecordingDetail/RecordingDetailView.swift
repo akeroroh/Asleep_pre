@@ -83,7 +83,7 @@ struct RecordingDetailView: View {
             }
         }
         .onDisappear {
-            viewModel?.stopPlayback()
+            viewModel?.cleanup()
         }
     }
 

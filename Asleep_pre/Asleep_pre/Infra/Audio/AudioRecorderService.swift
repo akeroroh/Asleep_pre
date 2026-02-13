@@ -19,10 +19,6 @@ final class AudioRecorderService: NSObject, AudioRecorderProtocol {
     private let meteringSubject = PassthroughSubject<MeteringLevel, Never>()
 
 
-    // TODO: statePublisher / meteringPublisher 구현
-    //   stateSubject.eraseToAnyPublisher()
-    //   meteringSubject.eraseToAnyPublisher()
-
     var statePublisher: AnyPublisher<RecordingState, Never> {
         stateSubject.eraseToAnyPublisher()
     }
@@ -44,7 +40,7 @@ final class AudioRecorderService: NSObject, AudioRecorderProtocol {
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
             AVSampleRateKey: quality.sampleRate,
             AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+            AVEncoderAudioQualityKey: AVAudioQuality.max.rawValue,
             AVEncoderBitRateKey: quality.bitRate
         ]
         
@@ -86,6 +82,7 @@ final class AudioRecorderService: NSObject, AudioRecorderProtocol {
 
     func resumeRecording() {
         audioRecorder?.record()
+        startMeteringTimer()
     }
 
     func stopRecording() -> TimeInterval? {

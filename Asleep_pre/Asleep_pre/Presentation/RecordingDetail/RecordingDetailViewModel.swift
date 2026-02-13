@@ -153,8 +153,13 @@ final class RecordingDetailViewModel {
         playbackProgress = progress
     }
 
-//    deinit {
-//        progressTimer?.invalidate()
-//        player.stop()
-//    }
+
+    /// View의 onDisappear에서 호출됨 — 리소스 정리
+    func cleanup() {
+        progressTimer?.invalidate()
+        progressTimer = nil
+        cancellables.removeAll()
+        player.stop()
+        try? audioSession.deactivateSession()
+    }
 }
